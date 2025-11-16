@@ -1,0 +1,67 @@
+[package]
+name = "silver-zksnark"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+# Workspace dependencies
+silver-core = { path = "../silver-core" }
+silver-crypto = { path = "../silver-crypto" }
+silver-storage = { path = "../silver-storage" }
+
+# Async
+tokio = { workspace = true }
+async-trait = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+bincode = { workspace = true }
+
+# Cryptography
+blake3 = { workspace = true }
+sha3 = { workspace = true }
+
+# zk-SNARK libraries - Arkworks ecosystem
+ark-ff = { version = "0.4", features = ["std"] }
+ark-ec = { version = "0.4", features = ["std"] }
+ark-poly = { version = "0.4", features = ["std"] }
+ark-serialize = { version = "0.4", features = ["std"] }
+ark-std = { version = "0.4", features = ["std"] }
+ark-relations = { version = "0.4", features = ["std"] }
+ark-groth16 = { version = "0.4", features = ["std"] }
+ark-bn254 = { version = "0.4", features = ["std"] }
+ark-bls12-381 = { version = "0.4", features = ["std"] }
+ark-snark = "0.4"
+
+# Field arithmetic and curves
+ark-r1cs-std = { version = "0.4", features = ["std"] }
+
+# Utilities
+bytes = { workspace = true }
+hex = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+rayon = { workspace = true }
+parking_lot = { workspace = true }
+dashmap = { workspace = true }
+
+# Random number generation
+rand = { workspace = true }
+rand_chacha = "0.3"
+
+# Hashing for Merkle trees
+sha2 = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }
+tempfile = { workspace = true }
+criterion = { workspace = true }
+
+[[bench]]
+name = "proof_generation"
+harness = false
