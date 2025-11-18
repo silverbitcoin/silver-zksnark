@@ -80,6 +80,7 @@ pub struct MerkleTree {
     leaves: Vec<MerkleNode>,
     
     /// Cache of node hashes for performance
+    #[allow(dead_code)]
     hash_cache: HashMap<Vec<u8>, [u8; 64]>,
 }
 

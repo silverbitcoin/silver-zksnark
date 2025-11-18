@@ -127,12 +127,14 @@ impl GpuAccelerator {
     }
 
     #[cfg(not(feature = "cuda"))]
+    #[allow(dead_code)]
     fn detect_cuda_devices() -> Result<Vec<GpuDevice>> {
         Ok(vec![])
     }
 
     /// Detect OpenCL devices
     #[cfg(feature = "opencl")]
+    #[allow(dead_code)]
     fn detect_opencl_devices() -> Result<Vec<GpuDevice>> {
         // TODO: Implement OpenCL device detection
         // This would use ocl or similar library
@@ -140,6 +142,7 @@ impl GpuAccelerator {
     }
 
     #[cfg(not(feature = "opencl"))]
+    #[allow(dead_code)]
     fn detect_opencl_devices() -> Result<Vec<GpuDevice>> {
         Ok(vec![])
     }

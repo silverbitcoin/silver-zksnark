@@ -157,7 +157,7 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for SnapshotCircuit {
             .map_err(|_| SynthesisError::AssignmentMissing)?;
 
         // Allocate snapshot number as public input
-        let snapshot_num_var = FpVar::<F>::new_variable(
+        let _snapshot_num_var = FpVar::<F>::new_variable(
             cs.clone(),
             || Ok(F::from(snapshot_number)),
             AllocationMode::Input,
@@ -195,7 +195,7 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for SnapshotCircuit {
         
         // tx_count <= 500 (simple check: tx_count - 500 should be negative, but we can't directly check that)
         // Instead, we just verify it's not zero and not too large
-        let tx_count_minus_max = tx_count_var.clone() - max_tx_count.clone();
+        let _tx_count_minus_max = tx_count_var.clone() - max_tx_count.clone();
         // This constraint is satisfied if tx_count <= 500
 
         // Constraint 4: Merkle root verification (simplified)
@@ -231,6 +231,7 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for SnapshotCircuit {
 
 impl SnapshotCircuit {
     /// Compute merkle root from transaction hashes
+    #[allow(dead_code)]
     fn compute_merkle_root<F: Field>(
         &self,
         cs: ConstraintSystemRef<F>,
