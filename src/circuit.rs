@@ -3,9 +3,7 @@ use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisE
 use ark_r1cs_std::prelude::*;
 use ark_r1cs_std::fields::fp::FpVar;
 use ark_r1cs_std::boolean::Boolean;
-use ark_r1cs_std::bits::uint8::UInt8;
 use ark_r1cs_std::alloc::AllocVar;
-use ark_bn254::Fr;
 
 /// Recursive snapshot circuit for proving blockchain validity
 /// 

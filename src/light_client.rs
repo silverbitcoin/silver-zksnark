@@ -6,7 +6,7 @@
 use crate::error::{Result, ZkSnarkError};
 use crate::types::Proof;
 use crate::verifier::ProofVerifier;
-use tracing::{info, debug, error};
+use tracing::info;
 use std::time::Instant;
 
 /// Light client state

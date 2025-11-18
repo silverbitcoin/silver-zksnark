@@ -4,7 +4,7 @@
 //! enabling 10-100× speedup on compatible hardware.
 
 use crate::error::{Result, ZkSnarkError};
-use tracing::{info, warn, debug};
+use tracing::{info, warn};
 
 /// GPU backend type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

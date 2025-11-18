@@ -4,12 +4,9 @@
 //! generating proving and verifying keys in a trustless manner.
 
 use crate::error::{Result, ZkSnarkError};
-use ark_bn254::Bn254;
-use ark_groth16::{ProvingKey as Groth16ProvingKey, VerifyingKey as Groth16VerifyingKey};
-use ark_serialize::{CanonicalSerialize, CanonicalDeserialize};
 use blake3::Hasher;
 use std::collections::HashMap;
-use tracing::{info, warn, error};
+use tracing::{info, warn};
 
 /// Participant in the trusted setup ceremony
 #[derive(Debug, Clone)]

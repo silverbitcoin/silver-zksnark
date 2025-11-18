@@ -1,16 +1,16 @@
 use crate::{
     circuit::SnapshotCircuit,
     error::{Result, ZkSnarkError},
-    types::{Proof, ProofMetadata, ProvingKey},
+    types::{Proof, ProofMetadata},
 };
-use ark_bn254::{Bn254, Fr};
+use ark_bn254::Bn254;
 use ark_groth16::{Groth16, ProvingKey as Groth16ProvingKey};
 use ark_serialize::{CanonicalSerialize, CanonicalDeserialize};
 use ark_snark::SNARK;
 use std::time::{SystemTime, Instant};
 use std::sync::Arc;
 use parking_lot::RwLock;
-use tracing::{info, warn, error};
+use tracing::info;
 use rand::thread_rng;
 
 /// Proof generator for creating recursive zk-SNARKs

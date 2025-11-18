@@ -6,7 +6,7 @@
 use crate::error::{Result, ZkSnarkError};
 use blake3::Hasher;
 use std::collections::HashMap;
-use tracing::{info, debug};
+use tracing::info;
 
 /// Merkle tree node
 #[derive(Debug, Clone, PartialEq, Eq)]

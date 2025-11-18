@@ -4,9 +4,8 @@
 //! implementation on testnet validators.
 
 use crate::error::{Result, ZkSnarkError};
-use crate::types::Proof;
 use crate::consensus::ProvenSnapshot;
-use tracing::{info, warn, error};
+use tracing::{info, warn};
 use std::collections::HashMap;
 
 /// Testnet validator configuration

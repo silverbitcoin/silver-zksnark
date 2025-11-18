@@ -1,15 +1,15 @@
 use crate::{
     error::{Result, ZkSnarkError},
-    types::{Proof, VerifyingKey},
+    types::Proof,
 };
 use ark_bn254::{Bn254, Fr};
 use ark_groth16::{Groth16, VerifyingKey as Groth16VerifyingKey, Proof as Groth16Proof};
-use ark_serialize::{CanonicalSerialize, CanonicalDeserialize};
+use ark_serialize::CanonicalDeserialize;
 use ark_snark::SNARK;
 use std::time::Instant;
 use std::sync::Arc;
 use parking_lot::RwLock;
-use tracing::{info, error, warn};
+use tracing::{info, error};
 use std::io::Cursor;
 
 /// Proof verifier for validating recursive zk-SNARKs

@@ -5,7 +5,7 @@
 
 use crate::error::{Result, ZkSnarkError};
 use crate::types::Proof;
-use tracing::{info, debug, error};
+use tracing::{info, debug};
 use std::collections::VecDeque;
 
 /// Snapshot with associated zk-SNARK proof
