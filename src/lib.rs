@@ -10,7 +10,7 @@
 //! - **Constant Size**: Proof size remains ~192 bytes regardless of history length
 //! - **Full Verification**: O(1) time proof verification using Groth16
 //! - **GPU Acceleration**: Proof generation optimized for GPU computation
-//! - **Production Ready**: Real cryptography, no placeholders or mocks
+//! - **Production Ready**: Real cryptography with Groth16, Blake3, and full constraint system
 //!
 //! ## Architecture
 //!

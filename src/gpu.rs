@@ -121,9 +121,31 @@ impl GpuAccelerator {
     /// Detect CUDA devices
     #[cfg(feature = "cuda")]
     fn detect_cuda_devices() -> Result<Vec<GpuDevice>> {
-        // TODO: Implement CUDA device detection
-        // This would use cudarc or similar library
-        Ok(vec![])
+        // Implement CUDA device detection using cudarc
+        use cudarc::driver::CudaDevice;
+
+        let mut devices = Vec::new();
+
+        match CudaDevice::new(0) {
+            Ok(device) => {
+                // Get device properties
+                let props = device.get_device_properties()
+                    .map_err(|e| GpuError::DetectionFailed(format!("Failed to get CUDA properties: {}", e)))?;
+
+                devices.push(GpuDevice {
+                    id: 0,
+                    name: format!("CUDA Device {}", props.device_name),
+                    backend: GpuBackend::Cuda,
+                    compute_capability: format!("{}.{}", props.major, props.minor),
+                    memory_mb: props.total_memory / (1024 * 1024),
+                });
+            }
+            Err(_) => {
+                // No CUDA devices found
+            }
+        }
+
+        Ok(devices)
     }
 
     #[cfg(not(feature = "cuda"))]
@@ -136,9 +158,38 @@ impl GpuAccelerator {
     #[cfg(feature = "opencl")]
     #[allow(dead_code)]
     fn detect_opencl_devices() -> Result<Vec<GpuDevice>> {
-        // TODO: Implement OpenCL device detection
-        // This would use ocl or similar library
-        Ok(vec![])
+        // Implement OpenCL device detection using ocl
+        use ocl::core;
+
+        let mut devices = Vec::new();
+
+        match core::get_platforms() {
+            Ok(platforms) => {
+                for platform in platforms {
+                    if let Ok(platform_devices) = core::get_device_ids(&platform, None, None) {
+                        for (idx, device) in platform_devices.iter().enumerate() {
+                            if let (Ok(name), Ok(memory)) = (
+                                core::get_device_info(*device, core::DeviceInfo::Name),
+                                core::get_device_info(*device, core::DeviceInfo::GlobalMemSize),
+                            ) {
+                                devices.push(GpuDevice {
+                                    id: idx as u32,
+                                    name: format!("OpenCL: {}", name),
+                                    backend: GpuBackend::OpenCl,
+                                    compute_capability: "N/A".to_string(),
+                                    memory_mb: memory / (1024 * 1024),
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            Err(_) => {
+                // No OpenCL platforms found
+            }
+        }
+
+        Ok(devices)
     }
 
     #[cfg(not(feature = "opencl"))]
