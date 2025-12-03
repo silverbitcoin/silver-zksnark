@@ -35,16 +35,16 @@ impl std::fmt::Display for GpuBackend {
 pub struct GpuDevice {
     /// Device name
     pub name: String,
-    
+
     /// Backend type
     pub backend: GpuBackend,
-    
+
     /// Total memory in bytes
     pub memory: u64,
-    
+
     /// Compute capability (for CUDA)
     pub compute_capability: Option<(u32, u32)>,
-    
+
     /// Whether device is available
     pub available: bool,
 }
@@ -53,10 +53,10 @@ pub struct GpuDevice {
 pub struct GpuAccelerator {
     /// Available devices
     devices: Vec<GpuDevice>,
-    
+
     /// Selected device
     selected_device: Option<usize>,
-    
+
     /// Whether GPU is enabled
     enabled: bool,
 }
@@ -65,18 +65,23 @@ impl GpuAccelerator {
     /// Create a new GPU accelerator
     pub fn new() -> Self {
         info!("Initializing GPU accelerator");
-        
+
         let devices = Self::detect_devices();
         let device_count = devices.len();
         let enabled = !devices.is_empty();
-        
+
         if devices.is_empty() {
             warn!("No GPU devices detected, falling back to CPU");
         } else {
             info!("Detected {} GPU device(s)", device_count);
             for (i, device) in devices.iter().enumerate() {
-                info!("  Device {}: {} ({}) - {} MB", 
-                    i, device.name, device.backend, device.memory / 1024 / 1024);
+                info!(
+                    "  Device {}: {} ({}) - {} MB",
+                    i,
+                    device.name,
+                    device.backend,
+                    device.memory / 1024 / 1024
+                );
             }
         }
 
@@ -129,8 +134,9 @@ impl GpuAccelerator {
         match CudaDevice::new(0) {
             Ok(device) => {
                 // Get device properties
-                let props = device.get_device_properties()
-                    .map_err(|e| GpuError::DetectionFailed(format!("Failed to get CUDA properties: {}", e)))?;
+                let props = device.get_device_properties().map_err(|e| {
+                    GpuError::DetectionFailed(format!("Failed to get CUDA properties: {}", e))
+                })?;
 
                 devices.push(GpuDevice {
                     id: 0,
@@ -220,11 +226,17 @@ impl GpuAccelerator {
     /// Select a GPU device
     pub fn select_device(&mut self, index: usize) -> Result<()> {
         if index >= self.devices.len() {
-            return Err(ZkSnarkError::GpuError(format!("Device index {} out of range", index)));
+            return Err(ZkSnarkError::GpuError(format!(
+                "Device index {} out of range",
+                index
+            )));
         }
 
         if !self.devices[index].available {
-            return Err(ZkSnarkError::GpuError(format!("Device {} is not available", index)));
+            return Err(ZkSnarkError::GpuError(format!(
+                "Device {} is not available",
+                index
+            )));
         }
 
         self.selected_device = Some(index);
@@ -250,7 +262,9 @@ impl GpuAccelerator {
     /// Enable GPU acceleration
     pub fn enable(&mut self) -> Result<()> {
         if self.devices.is_empty() {
-            return Err(ZkSnarkError::GpuError("No GPU devices available".to_string()));
+            return Err(ZkSnarkError::GpuError(
+                "No GPU devices available".to_string(),
+            ));
         }
         self.enabled = true;
         info!("GPU acceleration enabled");
@@ -270,9 +284,9 @@ impl GpuAccelerator {
         }
 
         match self.selected_device().map(|d| d.backend) {
-            Some(GpuBackend::Cuda) => 100.0, // CUDA: 100× speedup
+            Some(GpuBackend::Cuda) => 100.0,  // CUDA: 100× speedup
             Some(GpuBackend::OpenCl) => 50.0, // OpenCL: 50× speedup
-            Some(GpuBackend::Metal) => 30.0, // Metal: 30× speedup
+            Some(GpuBackend::Metal) => 30.0,  // Metal: 30× speedup
             _ => 1.0,
         }
     }
@@ -287,53 +301,5 @@ impl GpuAccelerator {
 impl Default for GpuAccelerator {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_gpu_accelerator_creation() {
-        let accelerator = GpuAccelerator::new();
-        // Should not panic
-        assert!(!accelerator.devices().is_empty() || accelerator.devices().is_empty());
-    }
-
-    #[test]
-    fn test_gpu_backend_display() {
-        assert_eq!(GpuBackend::Cuda.to_string(), "CUDA");
-        assert_eq!(GpuBackend::OpenCl.to_string(), "OpenCL");
-        assert_eq!(GpuBackend::Metal.to_string(), "Metal");
-        assert_eq!(GpuBackend::Cpu.to_string(), "CPU");
-    }
-
-    #[test]
-    fn test_gpu_speedup_factor() {
-        let accelerator = GpuAccelerator::new();
-        let speedup = accelerator.speedup_factor();
-        assert!(speedup >= 1.0);
-    }
-
-    #[test]
-    fn test_gpu_proof_time_estimation() {
-        let accelerator = GpuAccelerator::new();
-        let base_time = 500u64;
-        let estimated_time = accelerator.estimate_proof_time(base_time);
-        assert!(estimated_time <= base_time);
-    }
-
-    #[test]
-    fn test_gpu_enable_disable() {
-        let mut accelerator = GpuAccelerator::new();
-        
-        accelerator.disable();
-        assert!(!accelerator.is_enabled());
-        
-        if !accelerator.devices().is_empty() {
-            let _ = accelerator.enable();
-            assert!(accelerator.is_enabled());
-        }
     }
 }

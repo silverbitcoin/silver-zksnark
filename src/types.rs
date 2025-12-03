@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize, Serializer, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::time::SystemTime;
 
 /// A recursive zk-SNARK proof that proves the validity of a blockchain snapshot
@@ -6,18 +6,24 @@ use std::time::SystemTime;
 pub struct Proof {
     /// The actual Groth16 proof data
     pub proof_data: Vec<u8>,
-    
+
     /// Metadata about the proof
     pub metadata: ProofMetadata,
-    
+
     /// Hash of the current state root
-    #[serde(serialize_with = "serialize_array", deserialize_with = "deserialize_array")]
+    #[serde(
+        serialize_with = "serialize_array",
+        deserialize_with = "deserialize_array"
+    )]
     pub state_root: [u8; 64],
-    
+
     /// Hash of the previous proof (for recursion)
-    #[serde(serialize_with = "serialize_array", deserialize_with = "deserialize_array")]
+    #[serde(
+        serialize_with = "serialize_array",
+        deserialize_with = "deserialize_array"
+    )]
     pub previous_proof_hash: [u8; 64],
-    
+
     /// Snapshot number this proof corresponds to
     pub snapshot_number: u64,
 }
@@ -48,16 +54,16 @@ where
 pub struct ProofMetadata {
     /// When the proof was generated
     pub timestamp: SystemTime,
-    
+
     /// Who generated the proof (validator address)
     pub prover: Vec<u8>,
-    
+
     /// Number of transactions included in this snapshot
     pub transaction_count: u64,
-    
+
     /// Time taken to generate the proof (milliseconds)
     pub generation_time_ms: u64,
-    
+
     /// Whether GPU acceleration was used
     pub gpu_accelerated: bool,
 }
@@ -83,7 +89,7 @@ impl Proof {
         hasher.update(&self.state_root);
         hasher.update(&self.previous_proof_hash);
         hasher.update(&self.snapshot_number.to_le_bytes());
-        
+
         let hash = hasher.finalize();
         let mut result = [0u8; 64];
         result[..32].copy_from_slice(hash.as_bytes());

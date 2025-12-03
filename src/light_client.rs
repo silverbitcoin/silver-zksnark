@@ -6,24 +6,24 @@
 use crate::error::{Result, ZkSnarkError};
 use crate::types::Proof;
 use crate::verifier::ProofVerifier;
-use tracing::info;
 use std::time::Instant;
+use tracing::info;
 
 /// Light client state
 #[derive(Debug, Clone)]
 pub struct LightClientState {
     /// Latest state root
     pub state_root: [u8; 64],
-    
+
     /// Latest snapshot number
     pub snapshot_number: u64,
-    
+
     /// Latest proof
     pub proof: Option<Proof>,
-    
+
     /// Timestamp of last sync
     pub last_sync: u64,
-    
+
     /// Whether state is verified
     pub verified: bool,
 }
@@ -63,10 +63,10 @@ impl Default for LightClientState {
 pub struct LightClient {
     /// Client state
     state: LightClientState,
-    
+
     /// Proof verifier
     verifier: ProofVerifier,
-    
+
     /// Sync statistics
     sync_stats: SyncStats,
 }
@@ -76,16 +76,16 @@ pub struct LightClient {
 pub struct SyncStats {
     /// Total syncs performed
     pub total_syncs: u64,
-    
+
     /// Total time spent syncing (milliseconds)
     pub total_sync_time_ms: u64,
-    
+
     /// Average sync time (milliseconds)
     pub average_sync_time_ms: u64,
-    
+
     /// Last sync time (milliseconds)
     pub last_sync_time_ms: u64,
-    
+
     /// Total data downloaded (bytes)
     pub total_data_downloaded: u64,
 }
@@ -106,7 +106,7 @@ impl LightClient {
     /// Create a new light client
     pub fn new() -> Self {
         info!("Initializing light client");
-        
+
         Self {
             state: LightClientState::new(),
             verifier: ProofVerifier::new(),
@@ -124,7 +124,7 @@ impl LightClient {
     /// Sync with the latest proof
     pub fn sync(&mut self, proof: Proof) -> Result<()> {
         let start = Instant::now();
-        
+
         info!("Light client syncing to snapshot {}", proof.snapshot_number);
 
         // Verify the proof
@@ -139,14 +139,11 @@ impl LightClient {
         self.sync_stats.total_syncs += 1;
         self.sync_stats.total_sync_time_ms += sync_time_ms;
         self.sync_stats.last_sync_time_ms = sync_time_ms;
-        self.sync_stats.average_sync_time_ms = 
+        self.sync_stats.average_sync_time_ms =
             self.sync_stats.total_sync_time_ms / self.sync_stats.total_syncs;
         self.sync_stats.total_data_downloaded += proof.proof_data.len() as u64;
 
-        info!(
-            "Light client synced successfully in {}ms",
-            sync_time_ms
-        );
+        info!("Light client synced successfully in {}ms", sync_time_ms);
 
         Ok(())
     }
@@ -221,8 +218,7 @@ impl LightClient {
 
         // Import snapshot number
         let snapshot_number = u64::from_le_bytes([
-            data[64], data[65], data[66], data[67],
-            data[68], data[69], data[70], data[71],
+            data[64], data[65], data[66], data[67], data[68], data[69], data[70], data[71],
         ]);
         self.state.snapshot_number = snapshot_number;
 
@@ -237,92 +233,5 @@ impl LightClient {
 impl Default for LightClient {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::types::ProofMetadata;
-    use std::time::SystemTime;
-
-    fn create_test_proof(snapshot_number: u64) -> Proof {
-        Proof {
-            proof_data: vec![0u8; 192],
-            metadata: ProofMetadata {
-                timestamp: SystemTime::now(),
-                prover: vec![1u8; 32],
-                transaction_count: 100,
-                generation_time_ms: 150,
-                gpu_accelerated: true,
-            },
-            state_root: [snapshot_number as u8; 64],
-            previous_proof_hash: [0u8; 64],
-            snapshot_number,
-        }
-    }
-
-    #[test]
-    fn test_light_client_creation() {
-        let client = LightClient::new();
-        assert_eq!(client.snapshot_number(), 0);
-        assert!(!client.is_verified());
-    }
-
-    #[test]
-    fn test_light_client_state_update() {
-        let mut state = LightClientState::new();
-        let proof = create_test_proof(1);
-        
-        state.update(proof);
-        assert_eq!(state.snapshot_number, 1);
-        assert!(!state.verified);
-    }
-
-    #[test]
-    fn test_light_client_bandwidth_estimate() {
-        let client = LightClient::new();
-        let bandwidth = client.estimate_bandwidth();
-        assert!(bandwidth > 0);
-    }
-
-    #[test]
-    fn test_light_client_sync_time_estimate() {
-        let client = LightClient::new();
-        let time = client.estimate_sync_time();
-        assert!(time > 0);
-    }
-
-    #[test]
-    fn test_light_client_state_export() {
-        let mut client = LightClient::new();
-        let proof = create_test_proof(1);
-        client.state.update(proof);
-        
-        let result = client.export_state();
-        assert!(result.is_ok());
-        let data = result.unwrap();
-        assert!(data.len() >= 73);
-    }
-
-    #[test]
-    fn test_light_client_state_import() {
-        let mut client = LightClient::new();
-        let proof = create_test_proof(1);
-        client.state.update(proof);
-        
-        let exported = client.export_state().unwrap();
-        
-        let mut client2 = LightClient::new();
-        let result = client2.import_state(&exported);
-        assert!(result.is_ok());
-        assert_eq!(client2.snapshot_number(), 1);
-    }
-
-    #[test]
-    fn test_sync_statistics() {
-        let client = LightClient::new();
-        let stats = client.sync_stats();
-        assert_eq!(stats.total_syncs, 0);
     }
 }

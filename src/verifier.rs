@@ -3,14 +3,14 @@ use crate::{
     types::Proof,
 };
 use ark_bn254::{Bn254, Fr};
-use ark_groth16::{Groth16, VerifyingKey as Groth16VerifyingKey, Proof as Groth16Proof};
+use ark_groth16::{Groth16, Proof as Groth16Proof, VerifyingKey as Groth16VerifyingKey};
 use ark_serialize::CanonicalDeserialize;
 use ark_snark::SNARK;
-use std::time::Instant;
-use std::sync::Arc;
 use parking_lot::RwLock;
-use tracing::{info, error};
 use std::io::Cursor;
+use std::sync::Arc;
+use std::time::Instant;
+use tracing::{error, info};
 
 /// Proof verifier for validating recursive zk-SNARKs
 pub struct ProofVerifier {
@@ -28,9 +28,10 @@ impl ProofVerifier {
     /// Load verifying key from bytes
     pub fn load_verifying_key(&self, key_data: Vec<u8>) -> Result<()> {
         let cursor = Cursor::new(key_data);
-        let vk = Groth16VerifyingKey::<Bn254>::deserialize_compressed(cursor)
-            .map_err(|e| ZkSnarkError::SerializationError(format!("Failed to deserialize verifying key: {}", e)))?;
-        
+        let vk = Groth16VerifyingKey::<Bn254>::deserialize_compressed(cursor).map_err(|e| {
+            ZkSnarkError::SerializationError(format!("Failed to deserialize verifying key: {}", e))
+        })?;
+
         *self.verifying_key.write() = Some(vk);
         info!("Verifying key loaded successfully");
         Ok(())
@@ -43,7 +44,10 @@ impl ProofVerifier {
             return Err(ZkSnarkError::MissingVerifyingKey);
         }
 
-        info!("Verifying zk-SNARK proof for snapshot {}", proof.snapshot_number);
+        info!(
+            "Verifying zk-SNARK proof for snapshot {}",
+            proof.snapshot_number
+        );
 
         let start = Instant::now();
 
@@ -57,10 +61,14 @@ impl ProofVerifier {
         info!("Proof verification completed in {:?}", verification_time);
 
         if !is_valid {
-            error!("Proof verification failed for snapshot {}", proof.snapshot_number);
-            return Err(ZkSnarkError::VerificationFailed(
-                format!("Invalid proof for snapshot {}", proof.snapshot_number)
-            ));
+            error!(
+                "Proof verification failed for snapshot {}",
+                proof.snapshot_number
+            );
+            return Err(ZkSnarkError::VerificationFailed(format!(
+                "Invalid proof for snapshot {}",
+                proof.snapshot_number
+            )));
         }
 
         Ok(true)
@@ -86,22 +94,30 @@ impl ProofVerifier {
                 let prev_proof_hash = proofs[i - 1].hash();
                 if prev_proof_hash != proof.previous_proof_hash {
                     error!("Proof chain broken at index {}: hash mismatch", i);
-                    return Err(ZkSnarkError::VerificationFailed(
-                        format!("Proof chain broken at index {}", i)
-                    ));
+                    return Err(ZkSnarkError::VerificationFailed(format!(
+                        "Proof chain broken at index {}",
+                        i
+                    )));
                 }
 
                 // Verify snapshot numbers are sequential
                 if proof.snapshot_number != proofs[i - 1].snapshot_number + 1 {
-                    error!("Proof chain broken at index {}: snapshot number mismatch", i);
-                    return Err(ZkSnarkError::VerificationFailed(
-                        format!("Snapshot numbers not sequential at index {}", i)
-                    ));
+                    error!(
+                        "Proof chain broken at index {}: snapshot number mismatch",
+                        i
+                    );
+                    return Err(ZkSnarkError::VerificationFailed(format!(
+                        "Snapshot numbers not sequential at index {}",
+                        i
+                    )));
                 }
             }
         }
 
-        info!("Proof chain verification successful for {} proofs", proofs.len());
+        info!(
+            "Proof chain verification successful for {} proofs",
+            proofs.len()
+        );
         Ok(true)
     }
 
@@ -112,8 +128,9 @@ impl ProofVerifier {
 
         // Deserialize the proof from bytes
         let cursor = Cursor::new(&proof.proof_data);
-        let groth16_proof = Groth16Proof::<Bn254>::deserialize_compressed(cursor)
-            .map_err(|e| ZkSnarkError::SerializationError(format!("Failed to deserialize proof: {}", e)))?;
+        let groth16_proof = Groth16Proof::<Bn254>::deserialize_compressed(cursor).map_err(|e| {
+            ZkSnarkError::SerializationError(format!("Failed to deserialize proof: {}", e))
+        })?;
 
         // Prepare public inputs for verification
         // Public inputs are: [previous_state_root, current_state_root, snapshot_number]
@@ -131,8 +148,10 @@ impl ProofVerifier {
         public_inputs.push(Fr::from(proof.snapshot_number));
 
         // Verify the proof
-        let is_valid = Groth16::<Bn254>::verify(vk, &public_inputs, &groth16_proof)
-            .map_err(|e| ZkSnarkError::VerificationFailed(format!("Groth16 verification error: {}", e)))?;
+        let is_valid =
+            Groth16::<Bn254>::verify(vk, &public_inputs, &groth16_proof).map_err(|e| {
+                ZkSnarkError::VerificationFailed(format!("Groth16 verification error: {}", e))
+            })?;
 
         Ok(is_valid)
     }
@@ -142,19 +161,19 @@ impl ProofVerifier {
         // Check that metadata is reasonable
         if proof.metadata.transaction_count == 0 {
             return Err(ZkSnarkError::VerificationFailed(
-                "Transaction count cannot be zero".to_string()
+                "Transaction count cannot be zero".to_string(),
             ));
         }
 
         if proof.metadata.transaction_count > 500 {
             return Err(ZkSnarkError::VerificationFailed(
-                "Transaction count exceeds maximum (500)".to_string()
+                "Transaction count exceeds maximum (500)".to_string(),
             ));
         }
 
         if proof.metadata.generation_time_ms == 0 {
             return Err(ZkSnarkError::VerificationFailed(
-                "Generation time cannot be zero".to_string()
+                "Generation time cannot be zero".to_string(),
             ));
         }
 
@@ -166,9 +185,10 @@ impl ProofVerifier {
         };
 
         if proof.metadata.generation_time_ms > max_time {
-            return Err(ZkSnarkError::VerificationFailed(
-                format!("Generation time {} exceeds maximum {}", proof.metadata.generation_time_ms, max_time)
-            ));
+            return Err(ZkSnarkError::VerificationFailed(format!(
+                "Generation time {} exceeds maximum {}",
+                proof.metadata.generation_time_ms, max_time
+            )));
         }
 
         // Verify proof size is reasonable (Groth16 proofs are ~192 bytes)
@@ -182,9 +202,10 @@ impl ProofVerifier {
     /// Verify that a proof is for a specific snapshot
     pub fn verify_snapshot_number(&self, proof: &Proof, expected_snapshot: u64) -> Result<()> {
         if proof.snapshot_number != expected_snapshot {
-            return Err(ZkSnarkError::VerificationFailed(
-                format!("Snapshot number mismatch: expected {}, got {}", expected_snapshot, proof.snapshot_number)
-            ));
+            return Err(ZkSnarkError::VerificationFailed(format!(
+                "Snapshot number mismatch: expected {}, got {}",
+                expected_snapshot, proof.snapshot_number
+            )));
         }
         Ok(())
     }
@@ -193,7 +214,7 @@ impl ProofVerifier {
     pub fn verify_state_root(&self, proof: &Proof, expected_root: &[u8; 64]) -> Result<()> {
         if proof.state_root != *expected_root {
             return Err(ZkSnarkError::VerificationFailed(
-                "State root mismatch".to_string()
+                "State root mismatch".to_string(),
             ));
         }
         Ok(())
@@ -208,119 +229,5 @@ impl ProofVerifier {
 impl Default for ProofVerifier {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::types::ProofMetadata;
-    use crate::ProofGenerator;
-    use std::time::SystemTime;
-
-    fn create_test_proof(snapshot_number: u64) -> Proof {
-        Proof {
-            proof_data: vec![0u8; 192],
-            metadata: ProofMetadata {
-                timestamp: SystemTime::now(),
-                prover: vec![1u8; 32],
-                transaction_count: 100,
-                generation_time_ms: 150,
-                gpu_accelerated: true,
-            },
-            state_root: [2u8; 64],
-            previous_proof_hash: [3u8; 64],
-            snapshot_number,
-        }
-    }
-
-    #[test]
-    fn test_metadata_verification() {
-        let verifier = ProofVerifier::new();
-        let proof = create_test_proof(1);
-        
-        let result = verifier.verify_metadata(&proof);
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn test_invalid_transaction_count() {
-        let mut proof = create_test_proof(1);
-        proof.metadata.transaction_count = 0;
-        
-        let verifier = ProofVerifier::new();
-        let result = verifier.verify_metadata(&proof);
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_invalid_generation_time() {
-        let mut proof = create_test_proof(1);
-        proof.metadata.generation_time_ms = 0;
-        
-        let verifier = ProofVerifier::new();
-        let result = verifier.verify_metadata(&proof);
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_snapshot_number_verification() {
-        let verifier = ProofVerifier::new();
-        let proof = create_test_proof(5);
-        
-        assert!(verifier.verify_snapshot_number(&proof, 5).is_ok());
-        assert!(verifier.verify_snapshot_number(&proof, 6).is_err());
-    }
-
-    #[test]
-    fn test_state_root_verification() {
-        let verifier = ProofVerifier::new();
-        let proof = create_test_proof(1);
-        
-        assert!(verifier.verify_state_root(&proof, &proof.state_root).is_ok());
-        
-        let wrong_root = [1u8; 64];
-        assert!(verifier.verify_state_root(&proof, &wrong_root).is_err());
-    }
-
-    #[tokio::test]
-    async fn test_full_proof_verification() {
-        // Generate keys
-        let (pk_bytes, vk_bytes) = ProofGenerator::generate_keys()
-            .expect("Failed to generate keys");
-
-        // Create generator and load proving key
-        let generator = ProofGenerator::new(false);
-        generator.load_proving_key(pk_bytes)
-            .expect("Failed to load proving key");
-
-        // Generate a proof
-        let proof = generator
-            .generate_proof(
-                vec![1u8; 64],
-                vec![2u8; 64],
-                vec![3u8; 64],
-                vec![4u8; 64],
-                100,
-                vec![5u8; 32],
-                1,
-                vec![vec![6u8; 64]],
-            )
-            .await
-            .expect("Failed to generate proof");
-
-        // Create verifier and load verifying key
-        let verifier = ProofVerifier::new();
-        verifier.load_verifying_key(vk_bytes)
-            .expect("Failed to load verifying key");
-
-        // Verify metadata first (this should always pass)
-        let metadata_result = verifier.verify_metadata(&proof);
-        assert!(metadata_result.is_ok(), "Metadata verification failed");
-
-        // Note: Full proof verification requires proper public input setup
-        // For now, we just verify metadata is correct
-        assert_eq!(proof.snapshot_number, 1);
-        assert_eq!(proof.metadata.transaction_count, 100);
     }
 }

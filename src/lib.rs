@@ -120,34 +120,37 @@
 //! - **Key Security**: Protect proving keys from unauthorized access
 
 pub mod circuit;
-pub mod prover;
-pub mod verifier;
-pub mod types;
-pub mod error;
-pub mod recursive;
-pub mod merkle;
-pub mod gpu;
-pub mod trusted_setup;
 pub mod consensus;
+pub mod error;
+pub mod gpu;
 pub mod light_client;
-pub mod testnet;
 pub mod mainnet;
+pub mod merkle;
+pub mod prover;
+pub mod recursive;
+pub mod testnet;
+pub mod trusted_setup;
+pub mod types;
+pub mod verifier;
 
 pub use circuit::SnapshotCircuit;
-pub use prover::ProofGenerator;
-pub use verifier::ProofVerifier;
-pub use types::{Proof, ProofMetadata, ProvingKey, VerifyingKey};
-pub use error::{ZkSnarkError, Result};
-pub use recursive::{RecursiveProofCircuit, RecursiveProofVerifier};
-pub use merkle::{MerkleTree, MerkleNode};
+pub use consensus::{ConsensusIntegration, ProofChain, ProvenSnapshot};
+pub use error::{Result, ZkSnarkError};
 pub use gpu::{GpuAccelerator, GpuBackend, GpuDevice};
-pub use trusted_setup::{TrustedSetupCeremony, Participant, Contribution};
-pub use consensus::{ProvenSnapshot, ProofChain, ConsensusIntegration};
 pub use light_client::{LightClient, LightClientState, SyncStats};
-pub use testnet::{TestnetValidator, TestnetNetwork, NetworkHealth};
-pub use mainnet::{MainnetDeployment, MainnetConfig, DeploymentStatus};
+pub use mainnet::{DeploymentStatus, MainnetConfig, MainnetDeployment};
+pub use merkle::{MerkleNode, MerkleTree};
+pub use prover::ProofGenerator;
+pub use recursive::{RecursiveProofCircuit, RecursiveProofVerifier};
+pub use testnet::{NetworkHealth, TestnetNetwork, TestnetValidator};
+pub use trusted_setup::{Contribution, Participant, TrustedSetupCeremony};
+pub use types::{Proof, ProofMetadata, ProvingKey, VerifyingKey};
+pub use verifier::ProofVerifier;
 
-/// Re-export arkworks types for convenience
-pub use ark_groth16::{Groth16, Proof as Groth16Proof, ProvingKey as Groth16ProvingKey, VerifyingKey as Groth16VerifyingKey};
 pub use ark_bn254::Bn254;
+/// Re-export arkworks types for convenience
+pub use ark_groth16::{
+    Groth16, Proof as Groth16Proof, ProvingKey as Groth16ProvingKey,
+    VerifyingKey as Groth16VerifyingKey,
+};
 pub use ark_relations::r1cs::ConstraintSynthesizer;
